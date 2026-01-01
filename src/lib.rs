@@ -1,3 +1,5 @@
+use std::result;
+
 
 // dia 1
 pub fn double(n:i32) -> i32{ n * n }
@@ -111,5 +113,109 @@ pub fn first_positive_even(slice: &[i32]) -> Option<i32>
 {
     slice.iter().filter(|&&n| n > 0 )
                 .find(|&&n| n % 2 == 0).copied()
+}
+
+// DAY 5 Fold
+pub fn all_positive_fold(slice: &[i32])->bool
+{
+    slice.iter().fold(true, |acc,&x| acc && x > 0)
+}
+pub fn sum_fold(slice: &[i32]) ->i32
+{
+    slice.iter().fold(0,|acc,x,| acc + x )
+}
+
+pub fn sum_of_squares_of_even(slice: &[i32]) -> i32
+{
+    slice.iter().fold(0,|acc,&x| 
+        {
+            if x % 2 == 0
+            {
+                acc + (x * x)
+            }
+            else 
+            {
+                acc
+            }
+        })
+}
+// Cuenta los valores mayores que limit.
+pub fn count_greater_than(slice: &[i32], limit: i32) -> usize
+{
+    slice.iter().fold(0, |acc,&x| acc + (x > limit) as usize)
+}
+    /*
+    Devuelve el primer número negativo.
+    Reglas:
+    Solo iter() + fold
+    Sin map, filter, find
+    Sin mutabilidad
+    */
+pub fn first_negative(slice: &[i32]) -> Option<i32>
+{
+    slice.iter().fold(None,|acc:Option<i32>,&x|
+        {
+            acc.or_else(|| if x < 0 {Some(x)}else{None})
+        })
+}
+pub fn second_even(slice: &[i32]) -> Option<i32>
+{
+    let (_,second) = slice.iter().fold((None,None),
+     |(first,second),&x|
+    {
+        // si x % 2 == 0 && acc == 1 => Some(x)
+        if x % 2 == 0
+        {
+            match (first,second) {
+                (None,_)        => (Some(x),second),
+                (Some(_),None)  => (first,Some(x)),
+                _               => (first,second),
+            }
+        }
+        else
+        {
+            (first,second)
+        }
+    },);
+    second
+}
+
+// Day 6
+pub fn product(slice: &[i32]) -> Option<i32>
+{
+    slice.iter().copied().reduce(|a,b| a * b)
+}
+// use scan
+// retoma el valor anterior maximo y compara el proximo
+pub fn running_max(slice: &[i32]) -> Vec<i32>
+{
+    slice.iter().scan(None,|state: &mut Option<i32>,&x| 
+        {
+            let new_max = match *state
+            {
+              Some(current) => current.max(x), // el valor max entre el anterior y el current
+              None               => x, // si x es nada , devuelvo None y termino.
+            };
+
+            *state = Some(new_max);
+            Some(new_max)
+        }).collect()
+}
+// retoma el primer valor que sea menor que el anterior
+// scan + estado
+// acumulador ≠ resultado
+pub fn first_drop(slice: &[i32]) -> Option<i32>
+{
+    slice.iter().scan(None,|prev,&x|
+        {
+            let result = match *prev
+            {
+                Some(r)  if x < r   => Some(x), // el valor anterior cotejado con el current
+                _                       => None,
+            };
+            *prev = Some(x);
+            Some(result)
+        }).flatten()
+        .next()
 }
 fn main(){}
