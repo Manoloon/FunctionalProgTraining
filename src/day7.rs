@@ -1,13 +1,11 @@
-use std::result;
-
 // ejemplo
 struct PrefixSums(Vec<i32>);
 impl FromIterator<i32> for PrefixSums {
     fn from_iter<T: IntoIterator<Item = i32>>(iter: T) -> Self {
         let mut acc = 0;
-        let mut result = vec::new();
+        let mut result = Vec::new();
 
-        for x in iter{
+        for x in iter {
             acc += x;
             result.push(acc);
         }
@@ -18,8 +16,7 @@ impl FromIterator<i32> for PrefixSums {
 // let ps: PrefixSums = vec![1,2,3].into_iter().collect();
 
 // no devuelves Vec , devuelves capacidad de composicion
-fn evens<I: IntoIterator<Item = i32>>(iter: I) -> impl Iterator<Item = i32>
-{
+fn evens<I: IntoIterator<Item = i32>>(iter: I) -> impl Iterator<Item = i32> {
     iter.into_iter().filter(|x| x % 2 == 0)
 }
 // --------------------------------------------------------------------- //
@@ -27,12 +24,132 @@ fn evens<I: IntoIterator<Item = i32>>(iter: I) -> impl Iterator<Item = i32>
 // Ejercicio 1
 // implementa un iterador que produzca : 0,1,1,2,3,5,8,...
 // regla : sin vectores, solo estado , next() puro
-struct Fibonacci;
+pub struct Fibonacci {
+    current: i32,
+    next: i32,
+    limit: i32,
+}
+impl Fibonacci {
+    pub fn new(limit: i32) -> Self {
+        Fibonacci {
+            current: 0,
+            next: 1,
+            limit,
+        }
+    }
+}
+impl Iterator for Fibonacci {
+    type Item = i32;
 
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current > self.limit {
+            None
+        } else {
+            let val = self.current;
+            let new_next = self.current + self.next;
+            self.current = self.next;
+            self.next = new_next;
+            Some(val)
+        }
+    }
+}
 
-
-// ejercicio 2
-// funcion que retome solo los elementos en posiciones pares
-/* fn every_other<I>(iter: I) -> impl Iterator<Item = I::Item>
+pub struct RunningSum<I> {
+    iter: I,  // iterador interno
+    acc: i32, // estado acumulado
+}
+// constructor funcional
+pub fn running_sum<I>(iter: I) -> RunningSum<I>
 where
-    I: Iterator,*/
+    I: Iterator<Item = i32>,
+{
+    RunningSum { iter, acc: 0 }
+}
+impl<I> Iterator for RunningSum<I>
+where
+    I: Iterator<Item = i32>,
+{
+    type Item = i32;
+    fn next(&mut self) -> Option<Self::Item> {
+        let next_val = self.iter.next()?; // corta la implementacion 
+        let new_val = self.acc + next_val;
+        self.acc = new_val;
+        Some(new_val)
+    }
+}
+
+// Implementa un iterador genérico que produzca el producto acumulado.
+pub struct RunningProduct<I> {
+    iter: I,
+    acc: i32,
+}
+pub fn running_product<I>(iter: I) -> RunningProduct<I>
+where
+    I: Iterator<Item = i32>,
+{
+    RunningProduct { iter, acc: 1 }
+}
+impl<I> Iterator for RunningProduct<I>
+where
+    I: Iterator<Item = i32>,
+{
+    type Item = i32;
+    fn next(&mut self) -> Option<Self::Item> {
+        let next_val = self.iter.next()?;
+        let new_val = self.acc * next_val;
+        self.acc = new_val;
+        Some(new_val)
+    }
+}
+// Transformadores con estado opcional 
+/*
+Reimplementa RunningMax, pero ahora:
+    Debe empezar vacío
+    El primer elemento define el estado
+    No puede asumir valores iniciales
+*/
+pub struct RunningMax<I>
+{
+    curr_max : Option<i32>,
+    iter : I,
+}
+pub fn running_max<I>(iter: I) -> RunningMax<I>
+where 
+    I: Iterator<Item = i32>,
+    {
+        RunningMax { curr_max: None, iter }
+    }
+impl<I> Iterator for RunningMax<I>
+where 
+    I: Iterator<Item = i32>,
+{
+    type Item = i32;
+    fn next(&mut self) -> Option<Self::Item>
+    {
+        let next_val = self.iter.next()?;
+        let new_val = self.curr_max.max(Some(next_val));
+        self.curr_max = new_val;
+        Some(new_val)?
+    }
+}
+
+// Transformadores que filtran
+/*
+    Crea un iterador que ignore valores hasta que se cumpla una condición.
+    * El predicado se evalúa una sola vez
+    * Luego pasa todo sin filtrar
+    drop_until(iter, |x| x > 0)
+*/
+pub fn drop_until<I: IntoIterator<Item = i32>>(iter: I) -> impl Iterator<Item = i32> {
+    iter.into_iter().filter(|&x| x > 0)
+}
+
+// Iterador con estado compuesto
+/*
+    Ventanas deslizantes
+    Manejo Correcto del primer elemento
+*/
+// PairwiseSum
+// input : [1,2,3,4]
+// output : [3,5,7]
+// (1+2), (2+3), (3+4)
