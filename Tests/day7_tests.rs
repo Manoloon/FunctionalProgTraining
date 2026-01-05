@@ -1,5 +1,6 @@
 mod day7_tests {
-    use funcProg::day7::{Fibonacci, running_product, running_sum,running_max,drop_until};
+    use funcProg::day7::{Fibonacci, running_product, running_sum,
+        running_max,drop_until,pair_wise_sum,pair_wise_hide};
 
     #[test]
     fn fibonacci_correcto() {
@@ -62,9 +63,26 @@ mod day7_tests {
     #[test]
     fn DropUntil_correcto()
     {
-        let data = vec![-3,-2,0,4,5];
-        let require = vec![4,5];
-        let result: Vec<i32> = drop_until(data.into_iter()).collect();
+        let data = vec![-3, -2, -1, 0, 1, 2, 3];
+        let result: Vec<i32> = drop_until(data.into_iter(), |x| x > 0).collect();
+        assert_eq!(result, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn PairWiseSum_correcto()
+    {
+        let data = vec![1,2,3,4];
+        let require = vec![3,5,7];
+        let result: Vec<i32> = pair_wise_sum(data.into_iter()).collect();
+        assert_eq!(result,require);
+    }
+
+    #[test]
+    fn PairWiseSum_Hide_Correcto()
+    {
+        let data = vec![1,2,3,4];
+        let require = vec![3,5,7];
+        let result: Vec<i32> = pair_wise_hide(data.into_iter()).collect();
         assert_eq!(result,require);
     }
 }

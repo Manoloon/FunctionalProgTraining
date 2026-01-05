@@ -127,9 +127,13 @@ where
     fn next(&mut self) -> Option<Self::Item>
     {
         let next_val = self.iter.next()?;
-        let new_val = self.curr_max.max(Some(next_val));
-        self.curr_max = new_val;
-        Some(new_val)?
+        let new_max = match self.curr_max
+        {
+            Some(m) => m.max(next_val),
+            None => next_val,
+        };
+        self.curr_max = Some(new_max);
+        Some(new_max)
     }
 }
 
@@ -140,16 +144,93 @@ where
     * Luego pasa todo sin filtrar
     drop_until(iter, |x| x > 0)
 */
-pub fn drop_until<I: IntoIterator<Item = i32>>(iter: I) -> impl Iterator<Item = i32> {
-    iter.into_iter().filter(|&x| x > 0)
+pub struct DropUntil<I,P>
+{
+    iter: I,
+    pred: P,
+    started: bool,
 }
+pub fn drop_until<I,P>(iter: I,pred: P) -> DropUntil<I,P>
+where
+    I: Iterator<Item = i32>,
+    P: Fn(i32) -> bool,
+    {
+        DropUntil { iter, pred, started: false }
+    }
+impl <I,P> Iterator for DropUntil<I,P> 
+where 
+    I: Iterator<Item = i32>,
+    P: Fn(i32) -> bool,
+    {
+        type Item = i32;
+        fn next(&mut self) ->Option<Self::Item>
+        {
+            while let Some(x) = self.iter.next()
+            {
+                if self.started
+                {
+                    return Some(x)
+                }
+                if (self.pred)(x)
+                {
+                    self.started = true;
+                    return Some(x)
+                }    
+            }
+            None
+        }
+    }
 
 // Iterador con estado compuesto
 /*
     Ventanas deslizantes
     Manejo Correcto del primer elemento
 */
-// PairwiseSum
-// input : [1,2,3,4]
-// output : [3,5,7]
-// (1+2), (2+3), (3+4)
+pub struct PairWiseSum<I>
+{
+    iter: I,
+    prev: Option<i32>,
+}
+pub fn pair_wise_sum<I>(iter: I)-> PairWiseSum<I>
+where 
+    I: Iterator<Item = i32>,
+    {
+        PairWiseSum { iter, prev: None}
+    }
+impl<I> Iterator for PairWiseSum<I>
+where 
+    I: Iterator<Item=i32>,
+    {
+        type Item = i32;
+        fn next(&mut self) -> Option<Self::Item>
+        {
+            let next_val = self.iter.next()?;
+            if let Some(prev) = self.prev
+            {
+                self.prev = Some(next_val);
+                Some(prev + next_val)
+            }
+            else
+            {
+                self.prev = Some(next_val);
+                self.next()
+            }
+        }
+    }
+
+// API limpia
+/*
+Requisitos:
+    El tipo concreto NO debe ser visible
+    Los tests deben seguir funcionando
+Objetivo:
+    Entender cuándo ocultar tipos
+    Diseñar APIs estables
+    ejemplo : pub fn foo<I>(iter: I) -> impl Iterator<Item = i32>
+*/
+pub fn pair_wise_hide<I>(iter: I) -> impl Iterator<Item = i32>
+where 
+    I: Iterator<Item = i32>,
+    {
+        PairWiseSum{iter,prev: None}
+    }
