@@ -1,18 +1,18 @@
 ### Programacion Funcional en Rust
 # Conceptos claves :
-1) Funciones puras
-    * La salida depende unicamente de la entrada.
-    * No cambia el estado global ni hace I/O inesperado.
-2) Inmutabilidad
-    * Variables no se reasignan
-3) Composicion de funciones
-    * Combina funciones pequeñas para crear funciones complejas.
-4) Recursion en lugar de bucles
-    * Los bucles mutables se reemplazan con llamadas recursivas o iteradores.
-5) Tipos algebraicos
-    * <enum> y <Option>, <Result> en Rust permiten modelar valores opcionales y errores de manera segura.
-6) Funciones de orden superior
-    * Funciones que reciben o devuelven otras funciones.
+    1) Funciones puras
+        * La salida depende unicamente de la entrada.
+        * No cambia el estado global ni hace I/O inesperado.
+    2) Inmutabilidad
+        * Variables no se reasignan
+    3) Composicion de funciones
+        * Combina funciones pequeñas para crear funciones complejas.
+    4) Recursion en lugar de bucles
+        * Los bucles mutables se reemplazan con llamadas recursivas o iteradores.
+    5) Tipos algebraicos
+        * <enum> y <Option>, <Result> en Rust permiten modelar valores opcionales y errores de manera segura.
+    6) Funciones de orden superior
+        * Funciones que reciben o devuelven otras funciones.
 ## Dia 1
     # funciones puras
     * "Una funcion es una transformacion de valores, no una secuencia de pasos."
@@ -66,17 +66,46 @@
         -- Casos uso : suma, maximo, minimo, concatenacion   
 ## Dia 7
 # iteradores avanzados y composicion 
-Un iterador es una maquina de estados que produce valores bajo demanda
-```
-trait iterator
-{
-    type Item;
-    fn next(&mut self)->Option<Self::Item>;
-}
-```
-** Cada llamada a next():
-* observa el estado
-* decide si termina
-* produce un valor
-* actualiza el estado
-##
+    Un iterador es una maquina de estados que produce valores bajo demanda
+    ```
+    trait iterator
+    {
+        type Item;
+        fn next(&mut self)->Option<Self::Item>;
+    }
+    ```
+    ** Cada llamada a next():
+    * observa el estado
+    * decide si termina
+    * produce un valor
+    * actualiza el estado
+## Dia 8
+# Control de flujo funcional con iteradores
+    * Iteradores que terminan (early stop)
+    * ejemplo : suma valores hasta que la suma supere un limite
+    ```
+    pub fn sum_until<I>(iter: I, limit: i32) -> impl Iterator<Item = i32>
+    where
+        I: Iterator<Item = i32>,
+        {
+            iter.scan(0,move|acc,x|
+            {
+                *acc += x;
+                Some(*acc)
+            })
+            .take_while(move |&sum| sum <= limit)
+        }
+    ```
+    # Claves
+    * <scan> mantiene el estado
+    * <take_while> corta el flujo
+    * no mutas input
+    * no expones estado
+    # Cuando no usar combinadores?
+    ```
+    * Situación	                Solución
+    * Estado simple acumulativo	scan
+    * Ventanas / pares	        Iterador manual
+    * Corte complejo	            Iterador manual
+    * Lógica condicional	        Iterador manual 
+    ```
