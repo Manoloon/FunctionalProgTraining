@@ -109,3 +109,41 @@
     * Corte complejo	            Iterador manual
     * Lógica condicional	        Iterador manual 
     ```
+    ## Dia 9
+    # Iteradores infinitos, contratos y composicion segura
+        1) Iteradores infinitos 
+            * No es un bug, es una fuente.
+            ```
+            pub struct counter{ cur : i32,}
+            impl Iterator for Counter{
+                type Item = i32;
+                fn next(&mut self) -> Option<Self::Item>{
+                    let val = self.cur;
+                    self.cur += 1;
+                    Some(val)
+                }
+            }
+            ```
+            * Este iterador nunca devuelve <None>
+            Es correcto si:
+            * El usuario sabe que es infinito
+            * El usuario lo corta
+        2) Como cortar un iterador infinito (obligatorio)
+        ```
+        let v: Vec<i32> = Counter {cur: 0}
+            .take(5)
+            .collect();
+        ```
+        O con condicion:
+        ```
+        .take_while(|x| *x < 10)
+        ```
+        3) <FusedIterator>
+            * Un <Iterator> normal puede volver a emitir valores despues de <None>.
+            * Este iterador garantiza que despues del primer <None>, siempre es <None>.
+            * Cuando implementarlo :
+                * Tiene corte logico.
+                * Tiene estado final.
+                * No puede reactivarse.
+## Dia 10
+#      
